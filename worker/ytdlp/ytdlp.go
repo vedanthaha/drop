@@ -100,28 +100,32 @@ func Resolve(ctx context.Context, url string) (*Result, error) {
 
 	args = append(args, url)
 
+	var stdoutBuf, stderrBuf bytes.Buffer
 	cmd := exec.CommandContext(ctx, "yt-dlp", args...)
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
 
-	output, err := cmd.CombinedOutput()
+	err := cmd.Run()
 	if err != nil {
-		message := string(output)
+		message := stderrBuf.String()
+		if len(message) == 0 {
+			message = stdoutBuf.String()
+		}
 		if len(message) > 1200 {
 			message = message[len(message)-1200:]
 		}
 		return nil, fmt.Errorf("yt-dlp resolve failed: %s: %w", message, err)
 	}
 
-	// yt-dlp can print runtime notices before the JSON payload. For example,
-	// Python 3.10 currently emits a deprecation notice on stdout. Strip that
-	// preamble before decoding the actual JSON document.
-	start := bytes.IndexByte(output, '{')
-	end := bytes.LastIndexByte(output, '}')
+	stdoutBytes := stdoutBuf.Bytes()
+	start := bytes.IndexByte(stdoutBytes, '{')
+	end := bytes.LastIndexByte(stdoutBytes, '}')
 	if start < 0 || end < start {
 		return nil, fmt.Errorf("yt-dlp returned no JSON metadata")
 	}
 
 	var result Result
-	if err := json.Unmarshal(output[start:end+1], &result); err != nil {
+	if err := json.Unmarshal(stdoutBytes[start:end+1], &result); err != nil {
 		return nil, fmt.Errorf("failed to parse yt-dlp output: %w", err)
 	}
 
