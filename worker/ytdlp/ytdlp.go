@@ -51,7 +51,6 @@ func Resolve(ctx context.Context, url string) (*Result, error) {
 		"--dump-single-json",
 		"--no-download",
 		"--no-warnings",
-		"--extractor-args", "youtube:player_client=android",
 		url,
 	)
 
@@ -89,7 +88,6 @@ func Download(ctx context.Context, url, formatSpec, outputPath string, extraArgs
 	args := []string{
 		"--no-playlist",
 		"--no-warnings",
-		"--extractor-args", "youtube:player_client=android",
 	}
 
 	if formatSpec != "" {
