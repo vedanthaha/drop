@@ -31,6 +31,15 @@ func main() {
 		}
 	}
 
+	// SAFE COOKIE DIAGNOSTICS:
+	hasEnv := strings.TrimSpace(os.Getenv("YOUTUBE_COOKIES")) != ""
+	log.Printf("DIAG YOUTUBE_COOKIES env set: %t", hasEnv)
+	if fi, err := os.Stat("/tmp/youtube-cookies.txt"); err == nil {
+		log.Printf("DIAG /tmp/youtube-cookies.txt exists: true, size: %d bytes, mode: %s", fi.Size(), fi.Mode().String())
+	} else {
+		log.Printf("DIAG /tmp/youtube-cookies.txt exists: false (err: %v)", err)
+	}
+
 	// DIAGNOSTICS:
 	out, _ := exec.Command("yt-dlp", "--version").CombinedOutput()
 	log.Printf("DIAG yt-dlp version: %s", string(out))

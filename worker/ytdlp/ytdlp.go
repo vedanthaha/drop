@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/alldownload/worker/security"
@@ -73,6 +75,27 @@ func Resolve(ctx context.Context, url string) (*Result, error) {
 		if _, err := os.Stat(youtubeCookiesPath); err == nil {
 			args = append(args, "--cookies", youtubeCookiesPath)
 		}
+	}
+
+	if isYouTubeURL(url) {
+		hasCookiesArg := false
+		for i, arg := range args {
+			if arg == "--cookies" && i+1 < len(args) && args[i+1] == youtubeCookiesPath {
+				hasCookiesArg = true
+				break
+			}
+		}
+		cookieFileExists := false
+		var cookieFileSize int64
+		var cookieFileMode string
+		if fi, err := os.Stat(youtubeCookiesPath); err == nil {
+			cookieFileExists = true
+			cookieFileSize = fi.Size()
+			cookieFileMode = fi.Mode().String()
+		}
+		hasEnv := strings.TrimSpace(os.Getenv("YOUTUBE_COOKIES")) != ""
+		log.Printf("DIAG_RESOLVE: env_set=%t, file_exists=%t, size=%d, mode=%s, has_cookies_arg=%t",
+			hasEnv, cookieFileExists, cookieFileSize, cookieFileMode, hasCookiesArg)
 	}
 
 	args = append(args, url)
