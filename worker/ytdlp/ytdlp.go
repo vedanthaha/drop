@@ -51,6 +51,8 @@ func Resolve(ctx context.Context, url string) (*Result, error) {
 		"--dump-single-json",
 		"--no-download",
 		"--no-warnings",
+		"--extractor-args", "youtube:player-client=mweb",
+		"--extractor-args", "youtubepot-bgutilscript:script_path=/app/bgutil/server/src/generate_once.ts",
 		url,
 	)
 
@@ -88,6 +90,8 @@ func Download(ctx context.Context, url, formatSpec, outputPath string, extraArgs
 	args := []string{
 		"--no-playlist",
 		"--no-warnings",
+		"--extractor-args", "youtube:player-client=mweb",
+		"--extractor-args", "youtubepot-bgutilscript:script_path=/app/bgutil/server/src/generate_once.ts",
 	}
 
 	if formatSpec != "" {
