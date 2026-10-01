@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@theme {
+  --font-sans: var(--font-typo-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument), ui-serif, Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+:root {
+  --bg-color: #F9F9F8;
+  --text-color: #111111;
+  --border-color: #E5E7EB;
+  --card-bg: #FFFFFF;
+}
+
+.dark {
+  --bg-color: #1a1a1a;
+  --text-color: #F9F9F8;
+  --border-color: #333333;
+  --card-bg: #222222;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+input:focus {
+  outline: none;
+  box-shadow: none;
+}
