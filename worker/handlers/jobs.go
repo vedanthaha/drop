@@ -1,32 +1,33 @@
 package handlers
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
-	"github.com/alldownload/worker/services"
+	"github.com/alldownload/worker/security"
 )
 
-func JobsHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) JobsHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	
+	if !a.authenticate(w, r) {
+		return
+	}
 	jobID := strings.TrimPrefix(r.URL.Path, "/jobs/")
-	if jobID == "" {
-		http.Error(w, "Missing job ID", http.StatusBadRequest)
+	if security.ValidateUUID(jobID) != nil {
+		http.Error(w, "Invalid job ID", http.StatusBadRequest)
 		return
 	}
-
-	job, err := services.GetJobStatus(context.Background(), jobID)
+	job, err := a.store.GetJobStatus(r.Context(), jobID)
 	if err != nil {
-		http.Error(w, "Job not found", http.StatusNotFound)
+		if isNotFound(err) {
+			http.Error(w, "Job not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Job service unavailable", http.StatusServiceUnavailable)
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(job)
+	writeJSON(w, http.StatusOK, job)
 }

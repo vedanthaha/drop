@@ -5,15 +5,16 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
-	"strings"
 
+	"github.com/alldownload/worker/security"
 	"github.com/alldownload/worker/ytdlp"
 )
 
 type YouTubeAdapter struct{}
 
 func (y *YouTubeAdapter) CanHandle(url string) bool {
-	return strings.Contains(url, "youtube.com") || strings.Contains(url, "youtu.be")
+	platform, err := security.PlatformForURL(url)
+	return err == nil && platform == "youtube"
 }
 
 func (y *YouTubeAdapter) Resolve(ctx context.Context, url string) (*MediaResult, error) {

@@ -1,0 +1,22 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+frontend/.env.local
+worker/.env
+
+# Dependencies and generated output
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+worker/bin/
+*.log
+
+# Local media and temporary files
+media-jobs/
+tmp/
+
+# IDE and OS files
+.DS_Store
+.vscode/
+.idea/

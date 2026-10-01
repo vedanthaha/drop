@@ -1,29 +1,60 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
-	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
+	"github.com/alldownload/worker/config"
 	"github.com/alldownload/worker/handlers"
+	"github.com/alldownload/worker/services"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	godotenv.Load() // ignore error if .env doesn't exist
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
+	// Load local development values before any application dependencies are built.
+	_ = godotenv.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("configuration error: %v", err)
 	}
 
-	http.HandleFunc("/health", handlers.HealthHandler)
-	http.HandleFunc("/resolve", handlers.ResolveHandler)
-	http.HandleFunc("/process", handlers.ProcessHandler)
-	http.HandleFunc("/jobs/", handlers.JobsHandler)
+	store := services.NewStore(cfg)
+	processor := services.NewProcessor(cfg, store)
+	app := handlers.NewApp(cfg, store, processor)
 
-	log.Printf("Worker starting on port %s", port)
-	if err := http.ListenAndServe("0.0.0.0:"+port, nil); err != nil {
-		log.Fatalf("Server failed: %v", err)
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	processor.Start(ctx)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", app.HealthHandler)
+	mux.HandleFunc("/resolve", app.ResolveHandler)
+	mux.HandleFunc("/process", app.ProcessHandler)
+	mux.HandleFunc("/jobs/", app.JobsHandler)
+
+	server := &http.Server{
+		Addr:              "0.0.0.0:" + cfg.Port,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    16 * 1024,
+	}
+
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = server.Shutdown(shutdownCtx)
+	}()
+
+	log.Printf("worker starting on port %s id=%s", cfg.Port, cfg.WorkerID)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("server failed: %v", err)
 	}
 }

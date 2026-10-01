@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
-	"strings"
 
+	"github.com/alldownload/worker/security"
 	"github.com/alldownload/worker/ytdlp"
 )
 
@@ -17,12 +17,8 @@ type GenericAdapter struct {
 }
 
 func (g *GenericAdapter) CanHandle(url string) bool {
-	for _, pattern := range g.URLPatterns {
-		if strings.Contains(url, pattern) {
-			return true
-		}
-	}
-	return false
+	platform, err := security.PlatformForURL(url)
+	return err == nil && platform == g.PlatformName
 }
 
 func (g *GenericAdapter) Resolve(ctx context.Context, url string) (*MediaResult, error) {
@@ -82,20 +78,7 @@ func (g *GenericAdapter) Resolve(ctx context.Context, url string) (*MediaResult,
 		})
 	}
 
-	// If no video formats found, try to get whatever is available
-	if len(formats) == 0 && len(raw.Formats) > 0 {
-		last := raw.Formats[len(raw.Formats)-1]
-		formats = append(formats, MediaFormat{
-			ID:    last.FormatID,
-			Label: "Best",
-			Ext:   last.Ext,
-		})
-	}
-
 	mediaType := "video"
-	if len(formats) == 0 {
-		mediaType = "image"
-	}
 
 	return &MediaResult{
 		ID:        raw.ID,

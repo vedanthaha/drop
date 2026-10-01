@@ -1,5 +1,7 @@
 package platforms
 
+import "github.com/alldownload/worker/security"
+
 var adapters = map[string]Adapter{
 	"youtube":   &YouTubeAdapter{},
 	"pinterest": &PinterestAdapter{},
@@ -13,10 +15,12 @@ func GetAdapter(platform string) Adapter {
 }
 
 func DetectPlatform(url string) string {
-	for name, adapter := range adapters {
-		if adapter.CanHandle(url) {
-			return name
-		}
+	platform, err := security.ValidateMediaURL(url)
+	if err != nil {
+		return "unknown"
 	}
-	return "unknown"
+	if _, ok := adapters[platform]; !ok {
+		return "unknown"
+	}
+	return platform
 }

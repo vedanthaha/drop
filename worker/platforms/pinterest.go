@@ -10,13 +10,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alldownload/worker/security"
 	"github.com/alldownload/worker/ytdlp"
 )
 
 type PinterestAdapter struct{}
 
 func (p *PinterestAdapter) CanHandle(url string) bool {
-	return strings.Contains(url, "pinterest.com") || strings.Contains(url, "pin.it")
+	platform, err := security.PlatformForURL(url)
+	return err == nil && platform == "pinterest"
 }
 
 func (p *PinterestAdapter) Resolve(ctx context.Context, url string) (*MediaResult, error) {
@@ -154,13 +156,30 @@ func (p *PinterestAdapter) downloadImage(ctx context.Context, pageURL, tempDir s
 	if imageURL == "" {
 		return "", fmt.Errorf("could not find image URL")
 	}
+	if err := security.ValidateFetchURL(imageURL); err != nil {
+		return "", fmt.Errorf("unsafe image URL")
+	}
 
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Get(imageURL)
+	client := security.SafeHTTPClient(30 * time.Second)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, imageURL, nil)
+	if err != nil {
+		return "", err
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("image request failed")
+	}
+	if resp.ContentLength > 50*1024*1024 {
+		return "", fmt.Errorf("image is too large")
+	}
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(strings.ToLower(contentType), "image/") {
+		return "", fmt.Errorf("resolved URL is not an image")
+	}
 
 	ext := "jpg"
 	ct := resp.Header.Get("Content-Type")
@@ -177,9 +196,12 @@ func (p *PinterestAdapter) downloadImage(ctx context.Context, pageURL, tempDir s
 	}
 	defer f.Close()
 
-	_, err = io.Copy(f, resp.Body)
+	written, err := io.Copy(f, io.LimitReader(resp.Body, 50*1024*1024+1))
 	if err != nil {
 		return "", err
+	}
+	if written > 50*1024*1024 {
+		return "", fmt.Errorf("image is too large")
 	}
 
 	return outPath, nil

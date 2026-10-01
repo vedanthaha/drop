@@ -1,45 +1,44 @@
 package handlers
 
 import (
-	"context"
-	"encoding/json"
 	"net/http"
-	"os"
 
-	"github.com/alldownload/worker/services"
+	"github.com/alldownload/worker/security"
 )
 
 type ProcessRequest struct {
-	JobID     string `json:"jobId"`
-	SourceURL string `json:"sourceUrl"`
-	Platform  string `json:"platform"`
-	FormatID  string `json:"formatId"`
-	Output    string `json:"output"`
-	Title     string `json:"title"`
+	JobID string `json:"jobId"`
 }
 
-func ProcessHandler(w http.ResponseWriter, r *http.Request) {
+func (a *App) ProcessHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-
-	secret := os.Getenv("WORKER_SECRET")
-	if secret != "" && r.Header.Get("Authorization") != "Bearer "+secret {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	if !a.authenticate(w, r) {
 		return
 	}
-
 	var req ProcessRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+	if err := decodeJSON(w, r, a.cfg.MaxRequestBody, &req); err != nil || security.ValidateUUID(req.JobID) != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-
-	// Run process asynchronously
-	go services.ProcessJob(context.Background(), req.JobID, req.SourceURL, req.Platform, req.FormatID, req.Output, req.Title)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]string{"status": "accepted"})
+	job, err := a.store.GetJob(r.Context(), req.JobID)
+	if err != nil {
+		if isNotFound(err) {
+			http.Error(w, "Job not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Job service unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	if job.Status == "ready" || job.Status == "error" || job.Status == "expired" {
+		http.Error(w, "Job is not processable", http.StatusConflict)
+		return
+	}
+	if err := a.processor.Trigger(r.Context(), req.JobID); err != nil {
+		http.Error(w, "Could not queue job", http.StatusServiceUnavailable)
+		return
+	}
+	writeJSON(w, http.StatusAccepted, map[string]string{"status": "accepted"})
 }
