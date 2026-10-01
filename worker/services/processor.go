@@ -164,6 +164,7 @@ func (p *Processor) process(ctx context.Context, job *DownloadJob) error {
 	}
 	resultFile, err := adapter.Download(ctx, job.ID, job.SourceURL, job.SelectedFormat, job.OutputFormat, tempDir)
 	if err != nil {
+		log.Printf("Download error for job %s: %v", job.ID, err)
 		return fmt.Errorf("download failed")
 	}
 	fileInfo, err := os.Stat(resultFile)

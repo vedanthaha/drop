@@ -38,7 +38,7 @@ func Load() (Config, error) {
 		JobPollInterval:   durationOr("JOB_POLL_INTERVAL", 5*time.Second),
 		JobRetention:      durationOr("JOB_RETENTION", 60*time.Minute),
 		MaxConcurrentJobs: intOr("MAX_CONCURRENT_JOBS", 1),
-		MaxFileSize:       int64Or("MAX_FILE_SIZE", 5000*1024*1024),
+		MaxFileSize:       int64Or("MAX_FILE_SIZE", 50*1024*1024),
 		MaxRequestBody:    int64Or("MAX_REQUEST_BODY", 16*1024),
 	}
 

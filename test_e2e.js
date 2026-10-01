@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const URLS = [
-  "https://x.com/wuwaguy/status/2093748483740315802"
+  "https://in.pinterest.com/pin/615867317839642992/"
 ];
 
 async function run() {
@@ -29,14 +29,8 @@ async function run() {
     }
 
     // Pick the smallest video format to bypass Supabase 50MB free-tier limit
-    let bestFormat = resolveData.formats[0];
-    for (const f of resolveData.formats) {
-      if (f.filesize > 0 && (!bestFormat.filesize || f.filesize < bestFormat.filesize)) {
-        bestFormat = f;
-      }
-    }
-    const formatId = bestFormat.id;
-    console.log(`  -> Selected Format ID: ${formatId} (Size: ${bestFormat.filesize})`);
+    const formatId = "upscale-4x";
+    console.log(`  -> Selected Format ID: ${formatId}`);
 
     // 2. Download Job
     const resDownload = await fetch('http://localhost:3002/api/download', {
@@ -45,7 +39,7 @@ async function run() {
       body: JSON.stringify({ 
         mediaId: resolveData.id, 
         formatId: formatId,
-        output: "mp4" 
+        output: "jpg" 
       })
     });
     

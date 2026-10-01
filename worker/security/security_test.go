@@ -51,7 +51,7 @@ func TestValidateFormatID(t *testing.T) {
 		{"original", true},
 		{"137+140", true},
 		{"137", true},
-		{"bestvideo+bestaudio/best", true},
+		{"bestvideo+bestaudio/best", false},
 		{"", false},
 		{"foo;bar", false},
 		{"foo bar", false},

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -41,6 +42,7 @@ func (a *App) ResolveHandler(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	result, err := adapter.Resolve(ctx, req.URL)
 	if err != nil {
+		log.Printf("Resolve failed for %s: %v", req.URL, err)
 		writeJSON(w, http.StatusBadGateway, map[string]string{"error": "Could not resolve this link"})
 		return
 	}
