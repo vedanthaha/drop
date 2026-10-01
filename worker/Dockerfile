@@ -24,9 +24,11 @@ RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o 
 
 # Install Deno
 ENV DENO_INSTALL="/usr/local"
-RUN curl -fsSL https://deno.land/install.sh | sh
+RUN curl -fsSL https://deno.land/install.sh | sh && \
+    chmod a+rx /usr/local/bin/deno
 ENV DENO_DIR="/tmp/deno_cache"
-
+ENV XDG_CACHE_HOME="/tmp/.cache"
+RUN mkdir -p /tmp/.cache && chmod 777 /tmp/.cache
 # Install bgutil-ytdlp-pot-provider and clone the PO token generation script
 RUN python3 -m pip install bgutil-ytdlp-pot-provider
 RUN git clone https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /app/bgutil
