@@ -53,7 +53,11 @@ func isYouTubeURL(rawURL string) bool {
 
 // Resolve runs yt-dlp --dump-single-json and returns parsed output
 func Resolve(ctx context.Context, url string) (*Result, error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	timeout := 30 * time.Second
+	if isYouTubeURL(url) {
+		timeout = 90 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	args := []string{

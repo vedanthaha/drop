@@ -31,7 +31,7 @@ func Load() (Config, error) {
 		SupabaseURL:       os.Getenv("SUPABASE_URL"),
 		WorkerSecret:      os.Getenv("WORKER_SECRET"),
 		WorkerID:          envOr("WORKER_ID", ""),
-		ResolveTimeout:    durationOr("RESOLVE_TIMEOUT", 45*time.Second),
+		ResolveTimeout:    durationOr("RESOLVE_TIMEOUT", 90*time.Second),
 		DownloadTimeout:   durationOr("DOWNLOAD_TIMEOUT", 10*time.Minute),
 		UploadTimeout:     durationOr("UPLOAD_TIMEOUT", 10*time.Minute),
 		JobLeaseTimeout:   durationOr("JOB_LEASE_TIMEOUT", 15*time.Minute),
