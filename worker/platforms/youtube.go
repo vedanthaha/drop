@@ -24,14 +24,15 @@ func (y *YouTubeAdapter) Resolve(ctx context.Context, url string) (*MediaResult,
 	}
 
 	type formatEntry struct {
-		formatID string
-		height   int
-		width    int
-		fps      int
-		ext      string
-		hasAudio bool
-		filesize int64
-		tbr      float64
+		formatID  string
+		height    int
+		width     int
+		fps       int
+		ext       string
+		hasAudio  bool
+		filesize  int64
+		tbr       float64
+		directURL string
 	}
 
 	bestByHeight := make(map[int]*formatEntry)
@@ -47,17 +48,23 @@ func (y *YouTubeAdapter) Resolve(ctx context.Context, url string) (*MediaResult,
 			fs = f.FilesizeApprox
 		}
 
+		directURL := ""
+		if hasAudio && f.URL != "" && (f.Ext == "mp4" || f.Ext == "m4a" || f.Ext == "webm") {
+			directURL = f.URL
+		}
+
 		existing, ok := bestByHeight[f.Height]
 		if !ok || f.TBR > existing.tbr {
 			bestByHeight[f.Height] = &formatEntry{
-				formatID: f.FormatID,
-				height:   f.Height,
-				width:    f.Width,
-				fps:      int(f.FPS),
-				ext:      f.Ext,
-				hasAudio: hasAudio,
-				filesize: fs,
-				tbr:      f.TBR,
+				formatID:  f.FormatID,
+				height:    f.Height,
+				width:     f.Width,
+				fps:       int(f.FPS),
+				ext:       f.Ext,
+				hasAudio:  hasAudio,
+				filesize:  fs,
+				tbr:       f.TBR,
+				directURL: directURL,
 			}
 		}
 	}
@@ -72,14 +79,15 @@ func (y *YouTubeAdapter) Resolve(ctx context.Context, url string) (*MediaResult,
 	for _, h := range heights {
 		e := bestByHeight[h]
 		formats = append(formats, MediaFormat{
-			ID:       e.formatID,
-			Label:    HeightToLabel(e.height),
-			Width:    e.width,
-			Height:   e.height,
-			FPS:      e.fps,
-			Ext:      e.ext,
-			HasAudio: e.hasAudio,
-			Filesize: e.filesize,
+			ID:        e.formatID,
+			Label:     HeightToLabel(e.height),
+			Width:     e.width,
+			Height:    e.height,
+			FPS:       e.fps,
+			Ext:       e.ext,
+			HasAudio:  e.hasAudio,
+			Filesize:  e.filesize,
+			DirectURL: e.directURL,
 		})
 	}
 

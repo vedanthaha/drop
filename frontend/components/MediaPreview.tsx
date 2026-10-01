@@ -11,6 +11,7 @@ interface MediaFormat {
   ext: string
   hasAudio: boolean
   filesize: number
+  directUrl?: string
 }
 
 interface MediaData {
@@ -55,6 +56,29 @@ export default function MediaPreview({ data, onReset }: { data: MediaData; onRes
   const selectedFormatObj = data.formats.find(f => f.id === selectedFormat)
 
   const handleDownload = async () => {
+    // If format has directUrl and user does not require format conversion (e.g. mp3 audio extraction)
+    if (outputFormat !== 'mp3' && selectedFormatObj?.directUrl) {
+      const ext = selectedFormatObj.ext || 'mp4'
+      const safeTitle = (data.title || 'media').replace(/[^a-zA-Z0-9 _.-]/g, '').trim() || 'media'
+      const filename = `${safeTitle}.${ext}`
+
+      setFileInfo({ filename, filesize: selectedFormatObj.filesize })
+      setFileUrl(selectedFormatObj.directUrl)
+      setDownloadState('ready')
+      setProgress(100)
+
+      // Directly trigger browser download
+      const a = document.createElement('a')
+      a.href = selectedFormatObj.directUrl
+      a.download = filename
+      a.target = '_blank'
+      a.rel = 'noopener noreferrer'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
     setDownloadState('queued')
     setErrorMsg('')
     try {

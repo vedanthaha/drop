@@ -3,14 +3,15 @@ package platforms
 import "context"
 
 type MediaFormat struct {
-	ID       string `json:"id"`
-	Label    string `json:"label"`
-	Width    int    `json:"width"`
-	Height   int    `json:"height"`
-	FPS      int    `json:"fps"`
-	Ext      string `json:"ext"`
-	HasAudio bool   `json:"hasAudio"`
-	Filesize int64  `json:"filesize"`
+	ID        string `json:"id"`
+	Label     string `json:"label"`
+	Width     int    `json:"width"`
+	Height    int    `json:"height"`
+	FPS       int    `json:"fps"`
+	Ext       string `json:"ext"`
+	HasAudio  bool   `json:"hasAudio"`
+	Filesize  int64  `json:"filesize"`
+	DirectURL string `json:"directUrl,omitempty"`
 }
 
 type MediaResult struct {
