@@ -30,6 +30,8 @@ ENV PATH="/root/.deno/bin:${PATH}"
 # Install bgutil-ytdlp-pot-provider and clone the PO token generation script
 RUN python3 -m pip install bgutil-ytdlp-pot-provider
 RUN git clone https://github.com/Brainicism/bgutil-ytdlp-pot-provider.git /app/bgutil
+WORKDIR /app/bgutil/server
+RUN deno install
 
 WORKDIR /app
 COPY --from=builder /app/worker .
