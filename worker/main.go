@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os/exec"
 	"os/signal"
 	"syscall"
 	"time"
@@ -21,6 +22,15 @@ func main() {
 	if err != nil {
 		log.Fatalf("configuration error: %v", err)
 	}
+
+	// DIAGNOSTICS:
+	out, _ := exec.Command("yt-dlp", "--version").CombinedOutput()
+	log.Printf("DIAG yt-dlp version: %s", string(out))
+	out, _ = exec.Command("ls", "-la", "/usr/local/bin/deno").CombinedOutput()
+	log.Printf("DIAG deno path: %s", string(out))
+	out, _ = exec.Command("ls", "-la", "/app/bgutil").CombinedOutput()
+	log.Printf("DIAG bgutil dir: %s", string(out))
+
 
 	store := services.NewStore(cfg)
 	processor := services.NewProcessor(cfg, store)
