@@ -27,7 +27,7 @@ func GenerateUUID() string {
 
 var allowedHosts = map[string]string{
 	"youtube.com": "youtube", "www.youtube.com": "youtube", "m.youtube.com": "youtube", "youtu.be": "youtube",
-	"pinterest.com": "pinterest", "www.pinterest.com": "pinterest", "pin.it": "pinterest",
+	"pinterest.com": "pinterest", "www.pinterest.com": "pinterest", "in.pinterest.com": "pinterest", "pin.it": "pinterest",
 	"instagram.com": "instagram", "www.instagram.com": "instagram",
 	"tiktok.com": "tiktok", "www.tiktok.com": "tiktok",
 	"x.com": "x", "www.x.com": "x", "twitter.com": "x", "www.twitter.com": "x",
@@ -133,7 +133,7 @@ func ValidateFormatID(value string) bool {
 	if value == "original" {
 		return true
 	}
-	if value == "" || len(value) > 128 || strings.ContainsAny(value, `/\\\x00\r\n`) {
+	if value == "" || len(value) > 128 {
 		return false
 	}
 	for _, char := range value {

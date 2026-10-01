@@ -37,7 +37,7 @@ func (y *YouTubeAdapter) Resolve(ctx context.Context, url string) (*MediaResult,
 	bestByHeight := make(map[int]*formatEntry)
 
 	for _, f := range raw.Formats {
-		if f.VCodec == "none" || f.VCodec == "" || f.Height == 0 {
+		if f.VCodec == "none" || f.VCodec == "" || f.Height == 0 || f.Height > 1080 {
 			continue
 		}
 

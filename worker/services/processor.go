@@ -116,7 +116,7 @@ func (p *Processor) process(ctx context.Context, job *DownloadJob) error {
 		return err
 	}
 	if !security.ValidateOutput(job.OutputFormat) || !security.ValidateFormatID(job.SelectedFormat) {
-		return fmt.Errorf("invalid job format")
+		return fmt.Errorf("invalid job format (output=%q, selected=%q)", job.OutputFormat, job.SelectedFormat)
 	}
 	if job.MediaType == "video" && job.OutputFormat != "mp4" && job.OutputFormat != "mp3" {
 		return fmt.Errorf("invalid video output")
@@ -181,7 +181,7 @@ func (p *Processor) process(ctx context.Context, job *DownloadJob) error {
 	filename := security.SafeFilename(job.Title, extension)
 	storagePath := "downloads/" + job.ID + "/" + filename
 	if err := p.store.UploadToStorage(ctx, resultFile, storagePath); err != nil {
-		return fmt.Errorf("upload failed")
+		return fmt.Errorf("upload failed: %v", err)
 	}
 	if err := p.store.UpdateJobReady(ctx, job.ID, storagePath, filename, fileInfo.Size()); err != nil {
 		return err
