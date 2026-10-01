@@ -5,9 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"time"
+
+	"github.com/alldownload/worker/security"
 )
+
+const youtubeCookiesPath = "/tmp/youtube-cookies.txt"
 
 // Result represents the raw JSON output from yt-dlp --dump-single-json
 type Result struct {
@@ -41,20 +46,34 @@ type Format struct {
 	TBR            float64 `json:"tbr"`
 }
 
+func isYouTubeURL(rawURL string) bool {
+	platform, err := security.PlatformForURL(rawURL)
+	return err == nil && platform == "youtube"
+}
+
 // Resolve runs yt-dlp --dump-single-json and returns parsed output
 func Resolve(ctx context.Context, url string) (*Result, error) {
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "yt-dlp",
+	args := []string{
 		"--no-playlist",
 		"--dump-single-json",
 		"-v",
 		"--no-download",
 		"--extractor-args", "youtube:player-client=mweb",
 		"--extractor-args", "youtubepot-bgutilscript:script_path=/app/bgutil/server/src/generate_once.ts",
-		url,
-	)
+	}
+
+	if isYouTubeURL(url) {
+		if _, err := os.Stat(youtubeCookiesPath); err == nil {
+			args = append(args, "--cookies", youtubeCookiesPath)
+		}
+	}
+
+	args = append(args, url)
+
+	cmd := exec.CommandContext(ctx, "yt-dlp", args...)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -92,6 +111,12 @@ func Download(ctx context.Context, url, formatSpec, outputPath string, extraArgs
 		"--no-warnings",
 		"--extractor-args", "youtube:player-client=mweb",
 		"--extractor-args", "youtubepot-bgutilscript:script_path=/app/bgutil/server/src/generate_once.ts",
+	}
+
+	if isYouTubeURL(url) {
+		if _, err := os.Stat(youtubeCookiesPath); err == nil {
+			args = append(args, "--cookies", youtubeCookiesPath)
+		}
 	}
 
 	if formatSpec != "" {

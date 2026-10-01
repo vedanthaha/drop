@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -21,6 +23,12 @@ func main() {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("configuration error: %v", err)
+	}
+
+	if cookies := os.Getenv("YOUTUBE_COOKIES"); strings.TrimSpace(cookies) != "" {
+		if err := os.WriteFile("/tmp/youtube-cookies.txt", []byte(cookies), 0600); err != nil {
+			log.Printf("failed to write youtube cookies file: %v", err)
+		}
 	}
 
 	// DIAGNOSTICS:
